@@ -2,6 +2,8 @@ package org.eql;
 
 import static org.junit.Assert.*;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -15,96 +17,75 @@ public class TestSelenium_OK {
 
 		System.setProperty("webdriver.gecko.driver", "src/main/resources/geckodriver.exe");
 
-		WebDriver driver = new FirefoxDriver();
+		// instanciation de de WebDriver
+	WebDriver driver = new FirefoxDriver();
 	
-		//Acces au site
-		driver.get("http://192.168.1.58:8090/jpetstore-1.0.5-env2/");
-		Thread.sleep(100);
-		
-		//Acces a la page de login
-		driver.findElement(By.xpath("//a[contains(@href,'shop/signonForm.do')]")).click();
-		Thread.sleep(100);
-		
-		
-		WebElement champPassword = driver.findElement(By.xpath("//input[@type='password'][@name='password']"));
-		WebElement champUsername =  driver.findElement(By.xpath("//input[@type='text'][@name='username']"));
-		
-		ecrireChampText(champUsername, "j2ee");
-		ecrireChampText(champPassword, "j2ee");
-		
-		//Submit le form
-		driver.findElement(By.xpath("//input[@type='image'][@name='update']")).submit();
-		Thread.sleep(150);
-		
-		//Test que ce soit le bon user
-		assertTrue("Mauvais utilisateur",driver.findElement(By.xpath("//font[contains(text(),'Welcome')]")).getText().equals("Welcome ABC!"));
-		Thread.sleep(100);
-		
-		//Test presence du bouton signoff
-		try {
-		assertTrue("Pas de bouton sign out",driver.findElement(By.xpath("//a[contains(@href,'shop/signoff.do')]")).isDisplayed());
-		}
-		catch(AssertionError ae) {
-			System.out.println("pas de bouton sign out");
-			throw ae;
-		}
-		Thread.sleep(100);
-		
-		//Acces categorie fish
-		driver.findElement(By.xpath("//a[contains(@href,'viewCategory.do?categoryId=FISH')]")).click();
-		Thread.sleep(100);
-		
-		//Test que l on soit bien dans la categorie Fish
-		assertTrue("Pas dans la catégorie Fish",driver.findElement(By.xpath("//h2[text()='Fish']")).getText().equals("Fish"));
-		
-		//Koi best fish
-		driver.findElement(By.xpath("//a[contains(@href,'viewProduct.do?productId=FI-FW-01')]")).click();
-		Thread.sleep(100);
-		
-		//Add to cart
-		driver.findElement(By.xpath("//a[contains(@href,'shop/addItemToCart.do?workingItemId=EST-4')]")).click();
-		Thread.sleep(100);
-		
-		//Test si dans le panier
-		assertTrue("Pas dans le Panier",driver.findElement(By.xpath("//h2[.='Shopping Cart']"))!=null);
-		Thread.sleep(100);
-		
-		//Changement de la quantite
-		driver.findElement(By.xpath("//input[@type='text'][@name='EST-4']")).clear();
-		Thread.sleep(100);
-		driver.findElement(By.xpath("//input[@type='text'][@name='EST-4']")).sendKeys("2");
-		Thread.sleep(100);
-		
-		//Update du cart
-		driver.findElement(By.xpath("//input[@type='image'][@name='update']")).click();
-		
-		//Recuperation du prix unitaire et changement de type
-		String list_cost = driver.findElement(By.xpath("//form[contains(@action,'shop/updateCartQuantities.do')]/table/tbody/tr[2]/td[6]")).getText();
-		System.out.println("Coût unitaire pré traitement : " + list_cost);
-		list_cost = list_cost.substring(1);
-		list_cost = list_cost.replace(",", ".");
-		System.out.println("Coût unitaire post traitement : " + list_cost);
-		
-		//Recuperation du prix total et changement de type
-		String tot_cost = driver.findElement(By.xpath("//form[contains(@action,'shop/updateCartQuantities.do')]/table/tbody/tr[2]/td[7]")).getText();
-		System.out.println("Coût total pré traitement : " + tot_cost);
-		tot_cost = tot_cost.substring(1);
-		tot_cost = tot_cost.replace(",", ".");
-		System.out.println("Coût total post traitement : " + tot_cost);
-		
-		double tot_cost_double = Double.parseDouble(tot_cost);
-		double list_cost_double =Double.parseDouble(list_cost);
-		
-		//Test que le prix total corresponde bien au prix unitaire x2
-		assertTrue("Prix erroné",tot_cost_double==(2*list_cost_double));
-		
-		Thread.sleep(600);
-		driver.quit();
-	}
+	//CONFIGURATION D'UN IMPLICIT WAIT
+	driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 
 	
-	public void ecrireChampText(WebElement we, String text) {
-		we.clear();
-		we.sendKeys(text);
+	//navigation
+	driver.get("http://demo.kieker-monitoring.net/jpetstore/");
+	
+	driver.findElement(By.xpath("//a[.='Enter the Store']")).click();
+	
+	//clic sur le lien sign in
+	driver.findElement(By.xpath("//a[.='Sign In']")).click();
+	
+	// Rempli les champs login password
+	driver.findElement(By.xpath("//input[@name='username']")).clear();
+	driver.findElement(By.xpath("//input[@name='password']")).clear();
+	driver.findElement(By.xpath("//input[@name='username']")).sendKeys("j2ee");
+	driver.findElement(By.xpath("//input[@name='password']")).sendKeys("j2ee");
+	
+	//clic sur le bouton submit
+	driver.findElement(By.xpath("//input[@name='signon']")).click();
+	
+	//verification du message de bienvenue
+	assertEquals(driver.findElement(By.id("WelcomeContent")).getText(),"Welcome ABC!");
+	
+	
+	//clic sur le lien Fish 
+	driver.findElement(By.xpath("//div[@id='QuickLinks']/a[contains(@href,'Id=FISH')]")).click();
+	assertEquals(driver.findElement(By.xpath("//h2")).getText(),"Fish");
+	
+	//clic sur un produit
+	driver.findElement(By.xpath("//a[contains(@href,'Id=FI-SW-01')]")).click();
+	
+	//clic sur un item
+	driver.findElement(By.xpath("//a[contains(@href,'workingItemId=EST-1')]")).click();
+	assertEquals(driver.findElement(By.xpath("//h2")).getText(),"Shopping Cart");
+	
+	//doubler la quantité du produit
+	driver.findElement(By.xpath("//input[@name='EST-1']")).clear();
+	driver.findElement(By.xpath("//input[@name='EST-1']")).sendKeys("2");
+	driver.findElement(By.xpath("//input[contains(@name,'update')]")).click();
+	
+	//vérification du calcul du montant total
+	
+	//récupère le prix unitaire et total en String (écarte le $ de la sélection)
+	String prixUnit = driver.findElement(By.xpath("//form/table/tbody/tr[2]/td[6]")).getText().substring(1, 5);
+	String prixTotal = driver.findElement(By.xpath("//form/table/tbody/tr[2]/td[7]")).getText().substring(1, 5);
+	
+	//remplace la virgule par un point
+	prixUnit = prixUnit.substring(0,2) + "." +prixUnit.substring(3,4);
+	prixTotal = prixTotal.substring(0,2) + "." +prixTotal.substring(3,4);
+	
+	//transforme le string en un double
+	double Unit = Double.parseDouble(prixUnit);
+	double Total = Double.parseDouble(prixTotal);
+	
+	try{
+		assertTrue(Total == Unit*2);
 	}
+	catch(AssertionError ae) {
+		System.out.println("ERREUR : le prix du panier n'a pas été multiplié par deux");
+	}
+	System.out.println("SUCCES : le prix du panier a été multiplié par deux");
+	
+	
+	driver.quit();
+	
+	}
+	
 }
